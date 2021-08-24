@@ -8,7 +8,7 @@ $route = App::i()->createUrl('documentalOrTechnical', 'basicData', ['id'=>$entit
 
 <!--botão para buscar inscrito -->
 <a class="btn btn-default" ng-click="editbox.open('report-evaluation-technical-options', $event)"
-    rel="noopener noreferrer">Separar avaliações</a>
+    rel="noopener noreferrer">Distribuir avaliações</a>
 
 <!-- Formulário -->
 <edit-box id="report-evaluation-technical-options" position="top"
@@ -17,7 +17,7 @@ $route = App::i()->createUrl('documentalOrTechnical', 'basicData', ['id'=>$entit
     
     <form class="form-report-evaluation-technical-options"
         action="<?=$route?>" method="GET">
-        <p>Separar avaliações por quantidade de avaliadores.</p>
-        <button class="btn btn-primary" type="submit">Separar...</button>
+        <p>Distribuir avaliações por quantidade de avaliadores.</p>
+        <button class="btn btn-primary" type="submit">Distribuir...</button>
     </form>
 </edit-box>

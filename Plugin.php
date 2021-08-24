@@ -1,5 +1,5 @@
 <?php
-namespace SeparateAssessments;
+namespace DistributionReviewers;
 
 use MapasCulturais\App;
 use MapasCulturais\Entities;
@@ -16,8 +16,6 @@ class Plugin extends \MapasCulturais\Plugin {
     {
         $app = App::i();
 
-        //TESTES EM EDITAL CINEMA E VIDEO *** 1544 ***
-        //HOOK ADD BOTÃO NOS EDITAIS DOCUMENTAIS OU TECNICOS
         $app->hook('template(opportunity.single.header-inscritos):end', function () use ($app) {
             $opportunity = $this->controller->requestedEntity;
             $type_evaluation = $opportunity->evaluationMethodConfiguration->getDefinition()->slug;
@@ -31,7 +29,7 @@ class Plugin extends \MapasCulturais\Plugin {
     public function register() 
     {
         $app = App::i();
-        $app->registerController('documentalOrTechnical', 'SeparateAssessments\Controllers\DocumentalOrTechnical');
+        $app->registerController('documentalOrTechnical', 'DistributionReviewers\Controllers\DocumentalOrTechnical');
     }
 
 }

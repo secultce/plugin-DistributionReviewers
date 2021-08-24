@@ -1,6 +1,6 @@
 <?php
 
-namespace SeparateAssessments\Controllers;
+namespace DistributionReviewers\Controllers;
 
 use MapasCulturais\App;
 use MapasCulturais\Controller;
@@ -57,11 +57,11 @@ class DocumentalOrTechnical extends Controller
 
         $quantityPerAppraiser = intval(count($registrations) / $evaluators);
 
+        // Separa em arrays as inscrições pela quantidade de avaliadores
         function separate($registrations, $quantityPerAppraiser, $evaluators) {
             $result = [[]];
             $group = 0;
 
-            // Separa em arrays as inscrições pela quantidade de avaliadores
             for ($i = 0; $i < count($registrations); $i++) {
                 if(!isset($result[$group])) {
                     $result[$group] = array();
@@ -80,6 +80,70 @@ class DocumentalOrTechnical extends Controller
         dd($registrationsSeparate);
 
         //Insere no banco as inscrições para cada avaliador...
+        $query_insert = "
+            insert into public.pcache 
+            (id, user_id, action, create_timestamp, object_type, object_id)
+            values
+                (SEQUENCE_ID, USER_ID, '@control', 'TIMESTAMP_DO_DIA', 'MapasCulturais\Entities\Agent', AGENT_ID)
+
+            insert into public.pcache 
+                (id, user_id, action, create_timestamp, object_type, object_id)
+            values
+                (SEQUENCE_ID,  USER_ID, 'create', 'TIMESTAMP_DO_DIA', 'MapasCulturais\Entities\Agent', AGENT_ID)
+
+            insert into public.pcache 
+                (id, user_id, action, create_timestamp, object_type, object_id)
+            values
+                (SEQUENCE_ID,  USER_ID, 'view', 'TIMESTAMP_DO_DIA', 'MapasCulturais\Entities\Agent', AGENT_ID)
+
+            insert into public.pcache 
+                (id, user_id, action, create_timestamp, object_type, object_id)
+            values
+                (SEQUENCE_ID,  USER_ID, 'modify', 'TIMESTAMP_DO_DIA', 'MapasCulturais\Entities\Agent', AGENT_ID)
+
+            insert into public.pcache 
+                (id, user_id, action, create_timestamp, object_type, object_id)
+            values
+            (SEQUENCE_ID,  USER_ID, 'viewPrivateFiles', 'TIMESTAMP_DO_DIA',     'MapasCulturais\Entities\Agent', AGENT_ID)
+
+            insert into public.pcache 
+                (id, user_id, action, create_timestamp, object_type, object_id)
+            values
+            (SEQUENCE_ID,  USER_ID, 'viewPrivateData', 'TIMESTAMP_DO_DIA',    'MapasCulturais\Entities\Agent', AGENT_ID)
+
+            insert into public.pcache 
+                (id, user_id, action, create_timestamp, object_type, object_id)
+            values
+                (SEQUENCE_ID,  USER_ID, 'createAgentRelation', 'TIMESTAMP_DO_DIA', 'MapasCulturais\Entities\Agent', AGENT_ID)
+
+            insert into public.pcache 
+                (id, user_id, action, create_timestamp, object_type, object_id)
+            values
+                (SEQUENCE_ID,  USER_ID, 'createAgentRelationWithControl', 'TIMESTAMP_DO_DIA', 'MapasCulturais\Entities\Agent', AGENT_ID)
+
+            insert into public.pcache 
+                (id, user_id, action, create_timestamp, object_type, object_id)
+            values
+                (SEQUENCE_ID, 82838, 'removeAgentRelation', 'TIMESTAMP_DO_DIA', 'MapasCulturais\Entities\Agent', AGENT_ID)
+
+            insert into public.pcache 
+                (id, user_id, action, create_timestamp, object_type, object_id)
+            values
+                (SEQUENCE_ID,  USER_ID, 'removeAgentRelationWithControl', 'TIMESTAMP_DO_DIA', 'MapasCulturais\Entities\Agent', AGENT_ID)
+
+            insert into public.pcache 
+                (id, user_id, action, create_timestamp, object_type, object_id)
+            values
+                (SEQUENCE_ID,  USER_ID, 'createSealRelation', 'TIMESTAMP_DO_DIA', 'MapasCulturais\Entities\Agent', AGENT_ID)
+
+            insert into public.pcache 
+                (id, user_id, action, create_timestamp, object_type, object_id)
+            values
+                (SEQUENCE_ID, USER_ID, 'removeSealRelation', 'TIMESTAMP_DO_DIA', 'MapasCulturais\Entities\Agent', AGENT_ID)
+        ";
+
+        $stmt_insert = $app->em->getConnection()->prepare($query_insert);
+        $stmt_insert->execute();
     }
 }
 
