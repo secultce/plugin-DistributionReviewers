@@ -32,6 +32,9 @@ class DocumentalOrTechnical extends Controller
             $this->errorJson("Edital sem inscrições!");
         }
 
+        // var_dump('registrations');
+        // dd($registrations);
+
         //Pegando avaliadores do edital
         $queryEvaluators = $opportunity->getEvaluationCommittee(false);
         $contEvaluators = count($queryEvaluators);
@@ -61,6 +64,7 @@ class DocumentalOrTechnical extends Controller
 
         $registrationsSeparate = separate($registrations, $quantityPerAppraiser, $contEvaluators);
 
+        dd($queryEvaluators);
         // Separando id de avaliadores
         $evaluators  = [];
         foreach($queryEvaluators as $key => $valor) {
@@ -114,18 +118,30 @@ class DocumentalOrTechnical extends Controller
                     // var_dump('query_update');
                     // dd($query_update);
 
+                    $jsonIncludes = '{"include":["'.$strInclude.'"],"exclude":["'.$strExcludes.'"]}';
+
                     $query_update = "
                         UPDATE
                             public.registration
                         SET
-                            valuers_exceptions_list = '{"include":[{"$strInclude"}],"exclude":["$strExcludes"]}'
+                            valuers_exceptions_list = '$jsonIncludes'
                         WHERE
                             opportunity_id = $opportunityId
-                            AND id $registrations;
+                            AND id = $registrations;
                     ";
 
-                    var_dump('query_update');
-                    dd($query_update);
+                    // $query_update = `
+                    //     UPDATE
+                    //         public.registration
+                    //     SET
+                    //         valuers_exceptions_list = '{"include":[{"$strInclude"}],"exclude":["$strExcludes"]}'
+                    //     WHERE
+                    //         opportunity_id = $opportunityId
+                    //         AND id $registrations;
+                    // `;
+
+                    // var_dump('query_update');
+                    // dd($query_update);
 
                     $stmt_update = $app->em->getConnection()->prepare($query_update);
                     $stmt_update->execute();
