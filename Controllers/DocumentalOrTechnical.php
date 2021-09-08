@@ -26,7 +26,9 @@ class DocumentalOrTechnical extends Controller
                     left join public.registration_evaluation as re
                         on re.registration_id = r.id
             where
-                op.id = {$opportunity->id}");
+                op.id = {$opportunity->id}
+                and r.status = 1");
+                
 
         if(!$registrations) {
             $this->errorJson("Edital sem inscrições!");
@@ -39,6 +41,87 @@ class DocumentalOrTechnical extends Controller
         $queryEvaluators = $opportunity->getEvaluationCommittee(false);
         $contEvaluators = count($queryEvaluators);
         $data = [];
+        // dd($queryEvaluators);
+
+        // Verifica ultimo id da permission_cache_pending 
+        $selectLastIdPcachePending  = $app->em->getConnection()->fetchAll("
+            select id from permission_cache_pending 
+            order by id desc
+            limit 1
+        ");
+        $lastIdPcachePending = $selectLastIdPcachePending[0]['id'];
+        $sequenciIdPcachePending = ++$lastIdPcachePending;
+
+
+        // Verifica ultimo id da pcache
+        $selectLastIdPcache = $app->em->getConnection()->fetchAll("
+            select id from pcache 
+            order by id desc
+            limit 1
+        ");
+        $lastIdPcache = $selectLastIdPcache[0]['id'];
+        $sequenciIdPcache = ++$lastIdPcache;
+
+        $create_timestamp = date("Y-m-d H:i:s", time());
+
+        // Verifica permissoes de avaliadores na pcache
+        foreach($queryEvaluators as $evaluator) {
+            $user_id = $evaluator->user->id;
+            $agent_id = $evaluator->id;
+
+            // Deleta antigas permissoes do avaliador
+            $query_delete = "
+                DELETE FROM pcache
+                where object_id = $opportunityId
+                and user_id = $user_id
+            ";
+            $stmt_delete = $app->em->getConnection()->prepare($query_delete);
+            $stmt_delete->execute();
+
+            // Adiciona permissoes corretas
+            $query_sendUserEvaluations = "
+                insert into pcache (id, user_id, action, create_timestamp, object_type, object_id) values($sequenciIdPcache, $user_id, 'sendUserEvaluations', '$create_timestamp', 'MapasCulturais\Entities\Opportunity', $opportunityId);
+            ";
+            $stmt_insert_query_sendUserEvaluations = $app->em->getConnection()->prepare($query_sendUserEvaluations);
+            $stmt_insert_query_sendUserEvaluations->execute();
+            ++$sequenciIdPcache;
+
+            $query_viewPrivateFiles = "
+                insert into pcache (id, user_id, action, create_timestamp, object_type, object_id) values($sequenciIdPcache, $user_id, 'viewPrivateFiles', '$create_timestamp', 'MapasCulturais\Entities\Opportunity', $opportunityId);
+            ";
+            $stmt_insert_query_viewPrivateFiles = $app->em->getConnection()->prepare($query_viewPrivateFiles);
+            $stmt_insert_query_viewPrivateFiles->execute();
+            ++$sequenciIdPcache;
+
+            $query_view = "
+                insert into pcache (id, user_id, action, create_timestamp, object_type, object_id) values($sequenciIdPcache, $user_id, 'view', '$create_timestamp', 'MapasCulturais\Entities\Opportunity', $opportunityId);
+            ";
+            $stmt_insert_query_view = $app->em->getConnection()->prepare($query_view);
+            $stmt_insert_query_view->execute();
+            ++$sequenciIdPcache;
+
+            $query_evaluateRegistrations = "
+                insert into pcache (id, user_id, action, create_timestamp, object_type, object_id) values($sequenciIdPcache, $user_id, 'evaluateRegistrations', '$create_timestamp', 'MapasCulturais\Entities\Opportunity', $opportunityId);
+            ";
+            $stmt_insert_query_evaluateRegistrations = $app->em->getConnection()->prepare($query_evaluateRegistrations);
+            $stmt_insert_query_evaluateRegistrations->execute();
+            ++$sequenciIdPcache;
+
+            $query_pendingAgent = "
+                insert into permission_cache_pending (id, object_id, object_type, status) values($sequenciIdPcachePending, $agent_id, 'MapasCulturais\Entities\Agent', '1');
+            ";
+            $stmt_insert_query_pendingAgent = $app->em->getConnection()->prepare($query_pendingAgent);
+            $stmt_insert_query_pendingAgent->execute();
+            ++$sequenciIdPcachePending;
+
+            $query_pendingOpportunity = "
+                insert into permission_cache_pending (id, object_id, object_type, status) values($sequenciIdPcachePending, $agent_id, 'MapasCulturais\Entities\Opportunity', '1');
+            ";
+            $stmt_insert_query_pendingOpportunity = $app->em->getConnection()->prepare($query_pendingOpportunity);
+            $stmt_insert_query_pendingOpportunity->execute();
+            ++$sequenciIdPcachePending;
+        }
+
         // dd($queryEvaluators);
 
         $quantityPerAppraiser = intval(count($registrations) / $contEvaluators);
@@ -63,8 +146,8 @@ class DocumentalOrTechnical extends Controller
         }
 
         $registrationsSeparate = separate($registrations, $quantityPerAppraiser, $contEvaluators);
+        //dd($registrationsSeparate);
 
-        dd($queryEvaluators);
         // Separando id de avaliadores
         $evaluators  = [];
         foreach($queryEvaluators as $key => $valor) {
@@ -90,12 +173,13 @@ class DocumentalOrTechnical extends Controller
             $evaluators[$previous] = $include[$previous];
 
             $includes = $include;
-            unset($evaluators[$key]);
+            // unset($evaluators[$key]);
             $excludes = $evaluators;
+            unset($excludes[$key]);
 
             //cache
-            array_push($cacheKey1, $key);
-            array_push($cacheIncludes, $includes);
+            // array_push($cacheKey1, $key);
+            // array_push($cacheIncludes, $includes);
 
             foreach($registrationsSeparate[$key] as $groupRegistrations) {
                 foreach($groupRegistrations as $registrations) {
