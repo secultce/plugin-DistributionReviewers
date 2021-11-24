@@ -18,11 +18,11 @@ class Plugin extends \MapasCulturais\Plugin {
 
         $app->hook('template(opportunity.single.header-inscritos):end', function () use ($app) {
             $opportunity = $this->controller->requestedEntity;
-            $type_evaluation = $opportunity->evaluationMethodConfiguration->getDefinition()->slug;
-            if ($type_evaluation == 'documentary' || $type_evaluation == 'technical') {
-                $opportunity = $this->controller->requestedEntity;
-                $this->part('form/button-basicDataInscribed', ['entity' => $opportunity]);
-            }
+          $type_evaluation = $opportunity->evaluationMethodConfiguration->getDefinition()->slug;
+             if ($type_evaluation == 'documentary' || $type_evaluation == 'technical') {
+                 $opportunity = $this->controller->requestedEntity;
+                 $this->part('form/button-basicDataInscribed', ['entity' => $opportunity]);
+             }
         });
     }
 

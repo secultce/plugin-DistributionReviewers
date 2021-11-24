@@ -11,7 +11,8 @@ class DocumentalOrTechnical extends Controller
     public function ALL_basicData() 
     {
         $app = App::i();
-
+        //var_dump('registrations');
+        //die();
         $opportunityId = (int) $this->data['id'];
         $opportunity =  $app->repo("Opportunity")->find($opportunityId);
 
@@ -27,15 +28,15 @@ class DocumentalOrTechnical extends Controller
                         on re.registration_id = r.id
             where
                 op.id = {$opportunity->id}
-                and r.status = 1");
+                and r.status in (1,10)");
                 
 
         if(!$registrations) {
             $this->errorJson("Edital sem inscrições!");
         }
 
-        // var_dump('registrations');
-        // dd($registrations);
+        //var_dump('registrations');
+        //dd($registrations);
 
         //Pegando avaliadores do edital
         $queryEvaluators = $opportunity->getEvaluationCommittee(false);
