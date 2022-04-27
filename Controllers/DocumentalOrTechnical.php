@@ -8,13 +8,13 @@ use MapasCulturais\i;
 
 class DocumentalOrTechnical extends Controller
 {
-    public function ALL_basicData() 
+    public function ALL_basicData()
     {
         $app = App::i();
-        //var_dump('registrations');
-        //die();
         $opportunityId = (int) $this->data['id'];
         $opportunity =  $app->repo("Opportunity")->find($opportunityId);
+        $url = "https://mapacultural.secult.ce.gov.br/oportunidade/{$opportunityId}";
+        $url_dev = "http://localhost:8080/oportunidade/{$opportunityId}#/tab=inscritos";
 
         // Pegando inscrições do edital
         $registrations = $app->em->getConnection()->fetchAll("
@@ -29,20 +29,19 @@ class DocumentalOrTechnical extends Controller
             where
                 op.id = {$opportunity->id}
                 and r.status in (1,10)");
-                
 
-        if(!$registrations) {
-            $this->errorJson("Edital sem inscrições!");
+
+        if (!$registrations) {
+            //$this->errorJson("Edital sem inscrições!");
+            echo "<script>
+            alert('Distribuição feita!');
+            window.location.href = '{$url_dev}';
+            </script>";
         }
-
-        //var_dump('registrations');
-        //dd($registrations);
 
         //Pegando avaliadores do edital
         $queryEvaluators = $opportunity->getEvaluationCommittee(false);
         $contEvaluators = count($queryEvaluators);
-        $data = [];
-        // dd($queryEvaluators);
 
         // Verifica ultimo id da permission_cache_pending 
         $selectLastIdPcachePending  = $app->em->getConnection()->fetchAll("
@@ -53,7 +52,6 @@ class DocumentalOrTechnical extends Controller
         $lastIdPcachePending = $selectLastIdPcachePending[0]['id'];
         $sequenciIdPcachePending = ++$lastIdPcachePending;
 
-
         // Verifica ultimo id da pcache
         $selectLastIdPcache = $app->em->getConnection()->fetchAll("
             select id from pcache 
@@ -62,11 +60,10 @@ class DocumentalOrTechnical extends Controller
         ");
         $lastIdPcache = $selectLastIdPcache[0]['id'];
         $sequenciIdPcache = ++$lastIdPcache;
-
         $create_timestamp = date("Y-m-d H:i:s", time());
 
         // Verifica permissoes de avaliadores na pcache
-        foreach($queryEvaluators as $evaluator) {
+        foreach ($queryEvaluators as $evaluator) {
             $user_id = $evaluator->user->id;
             $agent_id = $evaluator->id;
 
@@ -122,18 +119,16 @@ class DocumentalOrTechnical extends Controller
             $stmt_insert_query_pendingOpportunity->execute();
             ++$sequenciIdPcachePending;
         }
-
-        // dd($queryEvaluators);
-
         $quantityPerAppraiser = intval(count($registrations) / $contEvaluators);
 
         // Separa em arrays as inscrições pela quantidade de avaliadores
-        function separate($registrations, $quantityPerAppraiser, $contEvaluators) {
+        function separate($registrations, $quantityPerAppraiser, $contEvaluators)
+        {
             $result = [[]];
             $group = 0;
 
-            for($i = 0; $i < count($registrations); $i++) {
-                if(!isset($result[$group])) {
+            for ($i = 0; $i < count($registrations); $i++) {
+                if (!isset($result[$group])) {
                     $result[$group] = array();
                 }
                 array_push($result[$group], $registrations[$i]);
@@ -145,13 +140,11 @@ class DocumentalOrTechnical extends Controller
 
             return $result;
         }
-
         $registrationsSeparate = separate($registrations, $quantityPerAppraiser, $contEvaluators);
-        //dd($registrationsSeparate);
 
         // Separando id de avaliadores
         $evaluators  = [];
-        foreach($queryEvaluators as $key => $valor) {
+        foreach ($queryEvaluators as $key => $valor) {
             array_push($evaluators, $valor->user->id);
         }
 
@@ -159,33 +152,20 @@ class DocumentalOrTechnical extends Controller
         $include = [];
 
         //Variaveis de debug...
-        $cacheGrupoDeInscricoes = [];
-        $cacheIncludes = [];
         $cacheExcludes = [];
 
-        $cacheKey1 = [];
-        $cacheKey2 = [];
-
-
-        foreach($evaluators as $key => $valor) {
+        foreach ($evaluators as $key => $valor) {
             $previous = $key;
-
             $include[$key] = $valor;
             $evaluators[$previous] = $include[$previous];
-
             $includes = $include;
-            // unset($evaluators[$key]);
             $excludes = $evaluators;
             unset($excludes[$key]);
 
-            //cache
-            // array_push($cacheKey1, $key);
-            // array_push($cacheIncludes, $includes);
-
-            foreach($registrationsSeparate[$key] as $groupRegistrations) {
-                foreach($groupRegistrations as $registrations) {
+            foreach ($registrationsSeparate[$key] as $groupRegistrations) {
+                foreach ($groupRegistrations as $registrations) {
                     $strInclude = implode($includes, ',');
-                    $e2 = `'`.implode("','", $excludes).`'`;
+                    $e2 = `'` . implode("','", $excludes) . `'`;
                     $strExcludes = preg_replace('/(?<!^)\'(?!$)/', '"', $e2);
 
                     //cache
@@ -203,7 +183,7 @@ class DocumentalOrTechnical extends Controller
                     // var_dump('query_update');
                     // dd($query_update);
 
-                    $jsonIncludes = '{"include":["'.$strInclude.'"],"exclude":["'.$strExcludes.'"]}';
+                    $jsonIncludes = '{"include":["' . $strInclude . '"],"exclude":["' . $strExcludes . '"]}';
 
                     $query_update = "
                         UPDATE
@@ -239,16 +219,11 @@ class DocumentalOrTechnical extends Controller
             }
 
             unset($include[$previous]);
-            
         }
 
-        // var_dump($cacheKey1);
-        // var_dump($cacheIncludes);
-        // var_dump($cacheExcludes);
-        
-
-        echo "Distribuição feita";
+        echo "<script>
+            alert('Distribuição Concluída!');
+            window.location.href = '{$url_dev}';
+            </script>";
     }
 }
-
-?>
